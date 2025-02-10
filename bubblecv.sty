@@ -77,6 +77,7 @@
 %----------------------------------------------------------------------------------------
 \usepackage{xcolor}
 \definecolor{cvcolor}{RGB}{20, 20, 20}                      % main color
+\definecolor{cviconcolor}{RGB}{255, 255, 255}               % Font Awesome icon color
 \definecolor{cvbordercolor}{RGB}{255, 255, 255}             % border color
 \definecolor{cvavatarbordercolor}{RGB}{255, 255, 255}       % avatar border color
 \definecolor{cvtimelinecolor}{RGB}{0, 0, 0}                 % timeline color
@@ -121,11 +122,11 @@
 %----------------------------------------------------------------------------------------
 % COMMON PACKAGES
 %----------------------------------------------------------------------------------------
-\usepackage[utf8]{inputenc}  % for utf-8 encoding
-\usepackage{xparse}          % new document command
-\usepackage{ifthen}          % if then else
-\usepackage{tabularx}        % tabular for progress bar
-\usepackage{hyperref}        % hyper ref
+\usepackage[utf8]{inputenc}             % for utf-8 encoding
+\usepackage{xparse}                     % new document command
+\usepackage{ifthen}                     % if then else
+\usepackage{tabularx}                   % tabular for progress bar
+\usepackage[hidelinks]{hyperref}        % hyper ref and hide links
 
 %----------------------------------------------------------------------------------------
 % COLUMNS
@@ -138,11 +139,18 @@
 % FONTS & ICONS
 %----------------------------------------------------------------------------------------
 \usepackage{relsize}        % for font scaling
-\usepackage{fontawesome}
-% allow icons to scale
-\DeclareFontFamily{U}{fontawesomeOne}{}
-\DeclareFontShape{U}{fontawesomeOne}{m}{n}{<-> FontAwesome--fontawesomeone}{}
-\DeclareRobustCommand\FAone{\fontencoding{U}\fontfamily{fontawesomeOne}\selectfont}
+\usepackage{fontawesome5}
+
+\usepackage{fontspec}
+\setmainfont{Spectral}[
+    Path=./Spectral/,
+    Extension = .ttf,
+    UprightFont=*-Regular,
+    BoldFont=*-Bold,
+    ItalicFont=*-Italic,
+    BoldItalicFont=*-BoldItalic
+    ]
+\setmonofont{Source Code Pro}[Scale=0.8]
 
 %----------------------------------------------------------------------------------------
 % TIMELINE
@@ -179,7 +187,7 @@
             draw=#6, fill=#5, line width=#4mm,%
             path picture={%
                 \ifthenelse{\equal{#1}{}}{}{%
-                    \node at (path picture bounding box.center){%
+                    \node[opacity=1.0] at (path picture bounding box.center){%
                         \includegraphics[%
                             width=#2\dimexpr#3mm\relax,%
                             height=#2\dimexpr#3mm\relax]{#1}%
@@ -189,6 +197,32 @@
         ] (0,0) circle (\dimexpr#3mm-#4mm/2\relax);%
     \end{tikzpicture}%
 }%
+
+%----------------------------------------------------------------------------------------
+% DRAW CIRCLE - Font Awesome
+%----------------------------------------------------------------------------------------
+% Draw a circle with a font awesome icon inside.
+% Parameter 1:              Font Awesome icon
+% Parameter 2:              Font Awesome family (optional)
+% Parameter 3:              Color of Font Awesome icon in RGB.
+% Parameter 4:              Circle radius in millimeters.
+% Parameter 5:              Circle border width in millimeters.
+% Parameter 6:              Circle background color in RGB.
+% Parameter 7:              Circle border color in RGB.
+\NewDocumentCommand{\drawcirclefa}{m O{solid} m m m m m}{%
+    \begin{tikzpicture}%
+        \draw[%
+            draw=#7, fill=#6, line width=#5mm,%
+            path picture={%
+                \ifthenelse{\equal{#1}{}}{}{%
+                    \node[opacity=1.0] at (path picture bounding box.center){%
+                        \textcolor{#3}{\scalebox{1.4}{\faIcon[#2]{#1}}}
+                    };%
+                }%
+            }%
+        ] (0,0) circle (\dimexpr#4mm-#5mm/2\relax);%
+    \end{tikzpicture}%
+}
 
 %========================================================================================
 % PUBLIC FUNCTIONS
@@ -204,7 +238,17 @@
 % Parameter 4:              Description.
 \NewDocumentEnvironment{cv}{O{} O{2} m m}{%
     \relscale{\cvscale}%
-    \fontfamily{\cvfont}\selectfont%%
+    \rmfamily
+    %\fontfamily{\cvfont}%
+    \newfontfamily\spectralfont{Spectral}[
+        Path=Spectral/, % Path to the font folder
+        Extension=.ttf, % File extension
+        UprightFont=*-Regular,
+        BoldFont=*-Bold,
+        ItalicFont=*-Italic,
+        BoldItalicFont=*-BoldItalic
+    ]
+    \spectralfont
     
     \vspace*{\cvheadermargin mm}%
     \vspace*{-\cvtopmargin mm}%
@@ -233,10 +277,9 @@
 % CV SECTION
 %----------------------------------------------------------------------------------------
 % Groups events, items and skills inside one block.
-% Parameter 1 (optional):   Path to icon resource.
-% Parameter 2 (optional):   Icon scale.
-% Parameter 3:              Section title.
-\NewDocumentCommand{\cvsection}{O{} O{1} m}{%
+% Parameter 1:              Font Awesome icon.
+% Parameter 2:              Section title.
+\NewDocumentCommand{\cvsection}{m m}{%
     \ifthenelse{\equal{\iscvsidebar}{0}}{%
         \vspace{\cvmainspace mm}%
         \hspace{-\timelinespace mm}%
@@ -244,11 +287,11 @@
         \begin{minipage}{\dimexpr(\cvmainbubbleradius mm + \cvmainbubbleradius mm)}%
             \ifthenelse{\equal{#1}{}}%
                 {\protect\drawcircle{\cvmainbubbleradius}{\cvmainbubbleborderwidth}{cvcolor}{cvbordercolor}}%
-                {\protect\drawcircle[resources/#1][#2]{\cvmainbubbleradius}{\cvmainbubbleborderwidth}{cvcolor}{cvbordercolor}}%
+                {\protect\drawcirclefa{#1}{cviconcolor}{\cvmainbubbleradius}{\cvmainbubbleborderwidth}{cvcolor}{cvbordercolor}}%
         \end{minipage}%
         \hspace{\dimexpr(\timelinespace mm - \cvmainbubbleradius mm)}%
         \begin{minipage}{\linewidth}%
-            \textscale{\cvsectionfontscale}{\textbf{#3}}%
+            \textscale{\cvsectionfontscale}{\textbf{#2}}%
         \end{minipage}%
         \cvseparator%
     }{%
@@ -257,11 +300,11 @@
         \begin{minipage}{\dimexpr(\cvsidebarbubbleradius mm + \cvsidebarbubbleradius mm)}%
             \protect\ifthenelse{\equal{#1}{}}%
                 {\drawcircle{\cvsidebarbubbleradius}{\cvsidebarbubbleborderwidth}{cvcolor}{cvbordercolor}}%
-                {\drawcircle[resources/#1][#2]{\cvsidebarbubbleradius}{\cvsidebarbubbleborderwidth}{cvcolor}{cvbordercolor}}%
+                {\protect\drawcirclefa{#1}{cviconcolor}{\cvmainbubbleradius}{\cvmainbubbleborderwidth}{cvcolor}{cvbordercolor}}%
         \end{minipage}%
         \hspace{\cvsidebaroffset mm}%
         \begin{minipage}{\dimexpr(\linewidth - \cvsidebarbubbleradius mm - \cvsidebaroffset mm)}%
-            \textscale{\cvsectionfontscale}{\textbf{#3}}%
+            \textscale{\cvsectionfontscale}{\textbf{#2}}%
         \end{minipage}%
         \cvseparator%
     }%
@@ -345,15 +388,16 @@
 % List item with a label.
 % Parameter 1 (optional):   Icon name from fontawesome package.
 % Parameter 2 (optional):   Icon size in milimeters.
-% Parameter 3:              Content.
-\NewDocumentEnvironment{cvitem}{O{Circle} O{2.5} +b}{%
+% Parameter 3 (optional):   Font Awesome Icon family.
+% Parameter 4:              Content.
+\NewDocumentEnvironment{cvitem}{O{circle} O{1.5} O{solid} +b}{%
     \ifthenelse{\equal{\iscvsidebar}{1}}{%
         \begin{minipage}{\cvscale\dimexpr#2mm\relax}%
-            \makebox(0, 0){\textcolor{cvcolor}{\fontsize{\cvscale\dimexpr#2mm\relax}{\cvscale\dimexpr#2mm\relax}\csname fa#1\endcsname}}%
+            \makebox(0, 0){\textcolor{black}{\fontsize{\cvscale\dimexpr#2mm\relax}{\cvscale\dimexpr#2mm\relax}\faIcon[#3]{#1}}}%
         \end{minipage}%
         \hspace{\cvsidebaroffset mm}%
         \begin{minipage}{\dimexpr(\linewidth - \cvsidebaroffset mm - \cvscale\dimexpr#2mm\relax)}%
-            #3%
+            #4%
         \end{minipage}%
         \par%
     }{%
